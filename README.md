@@ -1,4 +1,4 @@
 Helpers
 =======
 
-Helpers for programming languages
+Helpers for programming languages.
