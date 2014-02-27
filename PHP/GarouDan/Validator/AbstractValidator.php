@@ -6,14 +6,14 @@ namespace GarouDan\Validator;
  */
 abstract class AbstractValidator
 {
-    const ERROR = "Error";
-    const WARNING = "Warning";
-    const SUCCESS = "Success";
-    
     /**
      * @var array Validation messages.
      */
-    public static $_messages = array();
+    protected static $_messages = array();
+    
+    protected static $_input = array();
+    
+    protected static $_ignore = array();
     
     /**
      * Get the validation messages.
@@ -31,25 +31,56 @@ abstract class AbstractValidator
      * @param string $key     Name of the field validated.
      * @param string $message Validation message.
      */
-    public static function setMessage($type, $key, $message)
+    protected static function setMessage($key, $message)
     {
         self::$_messages[$type][$key] = $message;
+    }    
+    
+    public static function getKeyByMethodName($method)
+    {
+        return \lcfirst(\preg_replace("/^[_]isValid$/", "", (string) $method));
     }
     
-    /**
-     * 
-     * @param array $data
-     * @param array $ignorable
-     * @throws \DomainException
-     * @throws \InvalidArgumentException
-     */
-    public static function isValidCollection(array $data, array $ignorable = null)
+    public static function _isValidData(array $input, array $ignorable)
     {
-        if (!is_array($data)) {
-            throw new \DomainException("The data provided must be an array.");
-        } elseif (empty($data)) {
-            throw new \InvalidArgumentException("The data provided is empty.");
+        if (($message = self::_isValidInput($input)) !== true) {
+            throw new \DomainException($message);
+        } elseif (($message = self::isValidIgnorable($ignorable)) !== true) {
+            throw new \DomainException($message);
         }
+        
+        $finalKeys = array_diff(array_keys($ignorable));
+    }
+    
+    public static function _isValidArray($input)
+    {
+        if (!is_array($input)) {
+            return "The input is not an array.";
+        }
+        
+        return true;
+    }
+    
+    public static function _isValidMultidimensionalArray($input)
+    {
+        if (($message = self::_isValidArray($input)) !== true) {
+            return $message;
+        } elseif (count($input) == count($input, COUNT_RECURSIVE)) {
+            return "The input is not a multidimensional array.";
+        }
+        
+        return true;
+    }
+    
+    public static function _isValidUnidimensionalArray($input)
+    {
+        if (($message = self::_isValidArray($input)) !== true) {
+            return $message;
+        } elseif (($message = self::_isMultidimensionalArray($input)) === true) {
+            return "The input is not a unidimensional array.";
+        }
+        
+        return true;
     }
 }
 
